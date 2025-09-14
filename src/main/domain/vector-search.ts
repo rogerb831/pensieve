@@ -1,3 +1,4 @@
+import sqlite3 from "sqlite3";
 import path from "path";
 import fs from "fs-extra";
 import log from "electron-log/main";
@@ -33,24 +34,20 @@ interface TranscriptChunk {
 }
 
 class SQLiteVectorStore {
-  private db: any = null;
+  private db: sqlite3.Database | null = null;
   private embeddings: any = null;
   private dbPath: string;
-  private sqlite3: any = null;
 
   constructor() {
     // Use user data directory for packaged app, fallback to cwd for development
     const dataDir = app.isPackaged 
-      ? path.join(app.getPath('userData'), 'vector-store')
-      : path.join(process.cwd(), 'vector-store');
-    this.dbPath = path.join(dataDir, "vector-store.db");
+      ? app.getPath('userData')
+      : process.cwd();
+    this.dbPath = path.join(dataDir, "vector-store", "vector-store.db");
   }
 
   async initialize() {
     try {
-      // Dynamically import sqlite3
-      this.sqlite3 = await import("sqlite3");
-      
       // Ensure directory exists
       await fs.ensureDir(path.dirname(this.dbPath));
 
@@ -60,8 +57,8 @@ class SQLiteVectorStore {
       log.info("Embedding model loaded successfully");
 
       // Open SQLite database
-      log.info(`Opening SQLite database at: ${this.dbPath}`);
-      this.db = new this.sqlite3.Database(this.dbPath);
+      log.info("Opening SQLite database...");
+      this.db = new sqlite3.Database(this.dbPath);
       
       // Load sqlite-vec extension if available
       await this.loadSqliteVec();
