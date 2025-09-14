@@ -36,13 +36,13 @@ export const historyApi = {
     const { createStuffDocumentsChain } = await import("langchain/chains/combine_documents");
     const { ChatPromptTemplate } = await import("@langchain/core/prompts");
     const { Document } = await import("@langchain/core/documents");
-    
+
     try {
       const chatModel = await getChatModel();
-      
+
       // Create a conversational prompt
       const prompt = ChatPromptTemplate.fromTemplate(`
-You are a helpful assistant that answers questions based on meeting transcripts. 
+You are a helpful assistant that answers questions based on meeting transcripts.
 Use the provided context to give a natural, conversational response to the user's question.
 
 Context from transcripts:
@@ -82,6 +82,7 @@ Please provide a helpful, conversational response based on the context above. If
       return "I'm sorry, I couldn't generate a proper response. Please try again.";
     }
   },
+
   
   // Debug/utility functions
   populateVectorStoreFromExistingTranscripts: async () => {
