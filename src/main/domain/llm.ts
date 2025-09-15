@@ -28,7 +28,8 @@ Answer the following question based only on the provided text:
 Question: {input}`;
 
 const prompts = {
-  summary: "Generate a short summary of the meeting. ",
+  summary:
+    "You are a super-intelligent assistant that summarizes meeting transcripts. Provide a detailed summary of the meeting, including key information discussed, decisions made, insights, and potential questions that were not asked or considered during the meeting to improve communication and thought.",
   actionItems:
     "Extract action items from the meeting. Each action item should be a task that the user needs to follow up on after the meeting. " +
     "Provide one action item per line, in the format '{Me/They}: {action item text} ({timestamp})'. ",
