@@ -33,7 +33,7 @@ export const processWavFile = async (
   );
   const inputTime = await ffmpeg.getDuration(input);
 
-  const settings = (await getSettings()).whisper;
+  const settings = (await getSettings()).transcription.whisper;
   const args = buildArgs({
     _0: input,
     t: settings.threads,

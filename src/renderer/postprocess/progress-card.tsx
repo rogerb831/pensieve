@@ -5,27 +5,45 @@ import {
   HiOutlineEllipsisHorizontalCircle,
   HiOutlineExclamationTriangle,
 } from "react-icons/hi2";
+import { useQuery } from "@tanstack/react-query";
 import { ProgressStep } from "./progress-step";
 import { useHistoryRecordings } from "../history/state";
 import { ProgressCardWrapper } from "./progress-card-wrapper";
 import { PostProcessingJob } from "../../types";
 import type { getProgressData } from "../../main/domain/postprocess";
+import { mainApi } from "../api";
+import { QueryKeys } from "../../query-keys";
 
-const allSteps = [
+const baseSteps = [
   "wav",
   "mp3",
   "modelDownload",
-  "whisper",
   "summary",
   "datahooks",
 ] as const;
+
 const stepLabels = {
-  modelDownload: "Downloading model",
+  modelDownload: "Downloading AI models",
   wav: "Preparing audio",
   mp3: "Generating MP3 file",
-  whisper: "Transcribing audio",
+  whisper: "Whisper transcription & diarization",
+  maleo: "Maleo transcription & diarization",
   summary: "Generating summary",
   datahooks: "Running datahooks",
+};
+
+// Helper function to get the appropriate steps based on transcription engine setting
+const getAllSteps = (transcriptionEngine: string) => {
+  const steps = [...baseSteps];
+  
+  // Insert the appropriate transcription step based on the engine setting
+  if (transcriptionEngine === "maleo") {
+    steps.splice(3, 0, "maleo"); // Insert after modelDownload
+  } else {
+    steps.splice(3, 0, "whisper"); // Default to whisper
+  }
+  
+  return steps;
 };
 
 export const ProgressCard: FC<{
@@ -33,8 +51,15 @@ export const ProgressCard: FC<{
   data: Awaited<ReturnType<typeof getProgressData>>;
 }> = ({ job, data }) => {
   const { data: recordings } = useHistoryRecordings();
+  const { data: settings } = useQuery({
+    queryKey: [QueryKeys.Settings],
+    queryFn: mainApi.getSettings,
+  });
   const recording = recordings?.[job.recordingId];
   const name = recording?.name ?? "Untitled recording";
+  
+  // Determine which transcription engine is being used
+  const transcriptionEngine = settings?.transcription?.engine || "whisper";
 
   if (job.error) {
     return (
@@ -73,14 +98,14 @@ export const ProgressCard: FC<{
           </>
         }
       >
-        {allSteps
+        {getAllSteps(transcriptionEngine)
           .filter((step) => !job.steps || job.steps.includes(step))
           .map((item, index) => (
             <ProgressStep
               key={item}
               label={stepLabels[item]}
               isRunning={item === data.currentStep}
-              isDone={allSteps.indexOf(data.currentStep as any) > index}
+              isDone={getAllSteps(transcriptionEngine).indexOf(data.currentStep as any) > index}
               progress={data.progress[item]}
             />
           ))}

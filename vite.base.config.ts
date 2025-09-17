@@ -7,7 +7,7 @@ export const builtins = [
   ...builtinModules.map((m) => [m, `node:${m}`]).flat(),
 ];
 
-export const external = [...builtins, "sqlite3"];
+export const external = [...builtins, "sqlite3", "onnxruntime-node", "@maia-id/maleo"];
 
 export function getBuildConfig(env: ConfigEnv<"build">): UserConfig {
   const { root, mode, command } = env;

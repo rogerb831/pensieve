@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import * as ffmpeg from "./ffmpeg";
 import * as history from "./history";
 import * as whisper from "./whisper";
+import * as maleo from "./maleo";
 import * as models from "./models";
 import * as runner from "./runner";
 import * as llm from "./llm";
@@ -22,6 +23,7 @@ const emptyProgress: Record<PostProcessingStep, null | number> = {
   wav: null,
   mp3: null,
   whisper: 0,
+  maleo: 0,
   summary: 0,
   datahooks: null,
   vectorSearch: 0,
@@ -133,6 +135,18 @@ const doWhisperStep = async (job: PostProcessingJob) => {
   await fs.rm(wav);
 };
 
+const doMaleoStep = async (job: PostProcessingJob) => {
+  if (hasAborted() || !hasStep(job, "maleo")) return;
+  const { wav, recordingsFolder } = await getFilePaths(job);
+
+  await maleo.processWavFile(
+    wav,
+    path.join(recordingsFolder, job.recordingId, "transcript.json")
+  );
+
+  await fs.rm(wav);
+};
+
 const doSummaryStep = async (job: PostProcessingJob) => {
   const settings = await getSettings();
   const transcript = await getRecordingTranscript(job.recordingId);
@@ -174,12 +188,18 @@ const doVectorSearchStep = async (job: PostProcessingJob) => {
 const postProcessRecording = async (job: PostProcessingJob) => {
   await doWavStep(job);
   await doMp3Step(job);
-  await doWhisperStep(job);
+  
+  // Choose transcription engine based on settings
+  const settings = await getSettings();
+  if (settings.transcription.engine === "maleo") {
+    await doMaleoStep(job);
+  } else {
+    await doWhisperStep(job);
+  }
+  
   await doSummaryStep(job);
   await doDataHooksStep(job);
   await doVectorSearchStep(job);
-
-  const settings = await getSettings();
 
   const { mic, screen } = await getFilePaths(job);
   if (settings.ffmpeg.removeRawRecordings) {
@@ -206,6 +226,7 @@ const resetProgress = () => {
   progress.wav = 0;
   progress.mp3 = 0;
   progress.whisper = 0;
+  progress.maleo = 0;
   progress.summary = 0;
 };
 

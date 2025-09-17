@@ -25,9 +25,9 @@ export const SettingsTabs: FC = () => (
         Audio Processing
       </Button>
     </Tabs.Trigger>
-    <Tabs.Trigger value={SettingsTab.Whisper} asChild>
+    <Tabs.Trigger value={SettingsTab.Transcription} asChild>
       <Button variant="ghost" className={styles.tab}>
-        Audio Transcription
+        Transcription
       </Button>
     </Tabs.Trigger>
     <Tabs.Trigger value={SettingsTab.Summary} asChild>

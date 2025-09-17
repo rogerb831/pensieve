@@ -59,7 +59,7 @@ export const getModelPath = (modelId: string) => {
 };
 
 export const prepareConfiguredModel = async () => {
-  const { model } = (await getSettings()).whisper;
+  const { model } = (await getSettings()).transcription.whisper;
   if (!(await hasModel(model))) {
     postprocess.setStep("modelDownload");
     await downloadModel(modelData[model].url, modelData[model].fileName);

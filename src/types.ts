@@ -52,6 +52,7 @@ export type PostProcessingStep =
   | "wav"
   | "mp3"
   | "whisper"
+  | "maleo"
   | "summary"
   | "datahooks"
   | "vectorSearch";
@@ -118,23 +119,33 @@ export const defaultSettings = {
       "[0:a][1:a] amerge=inputs=2, pan=stereo|c0<c0+c1|c1<c2+c3, highpass=f=300, lowpass=f=3000 [a]",
     mp3Filter: "amix=inputs=2:duration=longest",
   },
-  whisper: {
-    model: "ggml-base-q5_1",
-    threads: 4,
-    processors: 1,
-    maxContext: -1,
-    maxLen: 0,
-    splitOnWord: false,
-    bestOf: 5,
-    beamSize: 5,
-    audioCtx: 0,
-    wordThold: 0.01,
-    entropyThold: 2.4,
-    logprobThold: -1,
-    translate: false,
-    diarize: true,
-    noFallback: false,
-    language: "auto",
+  transcription: {
+    engine: "whisper" as "whisper" | "maleo",
+    whisper: {
+      model: "ggml-base-q5_1",
+      threads: 4,
+      processors: 1,
+      maxContext: -1,
+      maxLen: 0,
+      splitOnWord: false,
+      bestOf: 5,
+      beamSize: 5,
+      audioCtx: 0,
+      wordThold: 0.01,
+      entropyThold: 2.4,
+      logprobThold: -1,
+      translate: false,
+      diarize: true,
+      noFallback: false,
+      language: "auto",
+      advancedDiarization: false,
+    },
+    maleo: {
+      device: "cpu" as "cpu" | "gpu",
+      minSegmentMs: 1000, // Increased from 250ms to 1 second
+      mergeGapMs: 500,    // Increased from 200ms to 500ms
+      confidenceThreshold: 0.5,
+    },
   },
   datahooks: {
     enabled: false,

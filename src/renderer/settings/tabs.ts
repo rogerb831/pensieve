@@ -1,7 +1,7 @@
 export enum SettingsTab {
   General = "general",
   Ffmpeg = "ffmpeg",
-  Whisper = "whisper",
+  Transcription = "transcription",
   Summary = "summary",
   Hooks = "hooks",
   About = "about",

@@ -14,7 +14,7 @@ import { QueryKeys } from "../../query-keys";
 import { mainApi } from "../api";
 import { Settings } from "../../types";
 import { GeneralSettings } from "./general-settings";
-import { WhisperSettings } from "./whisper-settings";
+import { TranscriptionSettings } from "./transcription-settings";
 import { SettingsTabs } from "./settings-tabs";
 import { FfmpegSettings } from "./ffmpeg-settings";
 import { SummarySettings } from "./summary-settings";
@@ -25,11 +25,15 @@ export const SettingsScreen: FC = () => {
   const { settingsTab } = useSearch({
     from: "/settings" as const,
   });
-  const { data: values } = useQuery({
+  const { data: values, isLoading } = useQuery({
     queryKey: [QueryKeys.Settings],
     queryFn: mainApi.getSettings,
   });
-  const form = useForm<Settings>({ values, mode: "onChange" });
+  const form = useForm<Settings>({ 
+    values: values || undefined, 
+    mode: "onChange",
+    defaultValues: values
+  });
   const [hasSaved, setHasSaved] = useState(false);
 
   const flushSubmit = useCallback(
@@ -58,6 +62,17 @@ export const SettingsScreen: FC = () => {
     return () => window.removeEventListener("beforeunload", flushSubmit);
   }, [flushSubmit]);
 
+  if (isLoading || !values) {
+    return (
+      <PageContainer
+        title="Settings"
+        icon={<HiOutlineWrenchScrewdriver />}
+      >
+        <Box>Loading settings...</Box>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer
       title="Settings"
@@ -79,7 +94,7 @@ export const SettingsScreen: FC = () => {
               <FormProvider {...form}>
                 <GeneralSettings />
                 <FfmpegSettings />
-                <WhisperSettings />
+                <TranscriptionSettings />
                 <SummarySettings />
                 <HooksSettings />
                 <AboutSettings />

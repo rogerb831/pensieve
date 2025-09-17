@@ -2,7 +2,10 @@ import fs from "fs-extra";
 import path from "path";
 import { app } from "electron";
 import deepmerge from "deepmerge";
-import type { DeepPartial } from "@tanstack/react-router/dist/esm/utils";
+// Define DeepPartial type locally since it's not exported from deepmerge
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 import { Settings, defaultSettings } from "../../types";
 import { invalidateUiKeys } from "../ipc/invalidate-ui";
 import { QueryKeys } from "../../query-keys";

@@ -20,7 +20,12 @@ export default defineConfig((env) => {
         formats: ["cjs"],
       },
       rollupOptions: {
-        external,
+        external: [
+          ...external,
+          // Add native modules that can't be bundled
+          "onnxruntime-node",
+          "@maia-id/maleo"
+        ],
       },
     },
     plugins: [pluginHotRestart("restart")],
