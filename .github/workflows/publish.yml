@@ -3,43 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows
-            image: windows-latest
-            arch: ""
-            artifact_suffix: "windows-default"
-          - os: macos
-            image: macos-latest
-            arch: arm64
-            artifact_suffix: "macos-arm64"
-          - os: macos
-            image: macos-15-intel
-            arch: x64
-            artifact_suffix: "macos-x64"
-    runs-on: ${{ matrix.image }}
-    permissions:
-      contents: read
-    steps:
-      - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
-      - uses: volta-cli/action@v4
-      - run: yarn install
-      - run: yarn lint
-      - run: yarn run typecheck
-      - run: yarn run build:docs
-      - run: yarn make ${{ matrix.arch != '' && '--arch=' || '' }}${{ matrix.arch }}
-      - name: Upload distributables
-        uses: actions/upload-artifact@v4
-        with:
-          name: distributables-${{ matrix.artifact_suffix }}
-          path: out/make
-          retention-days: 1
-
   bump-version:
-    needs: build
     if: github.repository == 'lukasbach/pensieve'
     runs-on: ubuntu-latest
     permissions:
@@ -51,7 +15,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    needs: [build, bump-version]
+    needs: bump-version
     if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped')
     strategy:
       matrix:
@@ -59,15 +23,12 @@ jobs:
           - os: windows
             image: windows-latest
             arch: ""
-            artifact_suffix: "windows-default"
           - os: macos
             image: macos-latest
             arch: arm64
-            artifact_suffix: "macos-arm64"
           - os: macos
             image: macos-15-intel
             arch: x64
-            artifact_suffix: "macos-x64"
     runs-on: ${{ matrix.image }}
     permissions:
       contents: write
@@ -77,11 +38,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: yarn install
-      - name: Download distributables
-        uses: actions/download-artifact@v4
-        with:
-          name: distributables-${{ matrix.artifact_suffix }}
-          path: out/make
+      - run: yarn lint
+      - run: yarn run typecheck
+      - run: yarn run build:docs
+      - run: yarn make ${{ matrix.arch != '' && '--arch=' || '' }}${{ matrix.arch }}
       - run: yarn publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
