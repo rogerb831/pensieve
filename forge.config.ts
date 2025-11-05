@@ -104,6 +104,38 @@ const config: ForgeConfig = {
   ],
 
   hooks: {
+    packageAfterPrune: async (config, buildPath) => {
+      // Remove problematic symlinks in nested node_modules/.bin directories that break ASAR
+      // These symlinks point outside the package and cause ASAR packaging to fail.
+      // .bin directories are only needed for development (npm/yarn scripts), not at runtime.
+      const removeBinSymlinks = async (dir: string) => {
+        try {
+          const entries = await fs.readdir(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              // Recursively check all directories
+              await removeBinSymlinks(fullPath);
+
+              // If this is a .bin directory, remove it entirely
+              if (entry.name === ".bin") {
+                await fs.remove(fullPath);
+              }
+            } else if (entry.isSymbolicLink()) {
+              // Remove individual symlinks
+              await fs.unlink(fullPath);
+            }
+          }
+        } catch (error) {
+          // Ignore errors - directory might not exist or be inaccessible
+        }
+      };
+
+      const nodeModulesPath = path.join(buildPath, "node_modules");
+      if (await fs.pathExists(nodeModulesPath)) {
+        await removeBinSymlinks(nodeModulesPath);
+      }
+    },
     generateAssets: async (config, platform, arch) => {
       const ffmpegBase = path.join(
         __dirname,

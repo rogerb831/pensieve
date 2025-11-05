@@ -8,12 +8,17 @@ jobs:
   test:
     strategy:
       matrix:
-        os:
-          [
-            { name: 'windows', image: 'windows-latest' },
-            { name: 'macos', image: 'macos-latest' },
-          ]
-    runs-on: ${{ matrix.os.image }}
+        include:
+          - os: windows
+            image: windows-latest
+            arch: ""
+          - os: macos
+            image: macos-latest
+            arch: arm64
+          - os: macos
+            image: macos-latest
+            arch: x64
+    runs-on: ${{ matrix.image }}
     permissions:
       contents: read
       id-token: write
@@ -26,4 +31,4 @@ jobs:
       - run: yarn run lint
       - run: yarn run typecheck
       - run: yarn run build:docs
-      - run: yarn run make
+      - run: yarn run make ${{ matrix.arch != '' && '--arch=' || '' }}${{ matrix.arch }}
