@@ -16,7 +16,7 @@ jobs:
             image: macos-latest
             arch: arm64
           - os: macos
-            image: macos-latest
+            image: macos-15-intel
             arch: x64
     runs-on: ${{ matrix.image }}
     permissions:
