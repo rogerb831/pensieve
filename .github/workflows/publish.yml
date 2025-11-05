@@ -40,6 +40,7 @@ jobs:
 
   bump-version:
     needs: build
+    if: github.repository == 'lukasbach/pensieve'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -50,7 +51,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    needs: bump-version
+    needs: [build, bump-version]
+    if: always() && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped')
     strategy:
       matrix:
         include:
