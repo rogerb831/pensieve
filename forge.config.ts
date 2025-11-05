@@ -93,8 +93,13 @@ const config: ForgeConfig = {
       name: "@electron-forge/publisher-github",
       config: {
         repository: {
-          owner: "lukasbach",
-          name: "pensieve",
+          owner:
+            process.env.GITHUB_REPOSITORY_OWNER ||
+            process.env.GITHUB_REPOSITORY?.split("/")[0] ||
+            "lukasbach",
+          name:
+            process.env.GITHUB_REPOSITORY?.split("/")[1] ||
+            "pensieve",
         },
         prerelease: false,
         draft: true,
