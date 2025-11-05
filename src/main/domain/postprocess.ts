@@ -92,6 +92,12 @@ const doWavStep = async (job: PostProcessingJob) => {
   setStep("wav");
   const { mic, screen, wav } = await getFilePaths(job);
 
+  // Skip if WAV already exists
+  if (await fs.pathExists(wav)) {
+    log.info(`WAV file already exists, skipping creation: ${wav}`);
+    return;
+  }
+
   if (fs.existsSync(mic) && fs.existsSync(screen)) {
     await ffmpeg.toStereoWavFile(mic, screen, wav);
   } else if (fs.existsSync(mic)) {
@@ -108,6 +114,12 @@ const doMp3Step = async (job: PostProcessingJob) => {
   setStep("mp3");
   const { mic, screen, mp3 } = await getFilePaths(job);
 
+  // Skip if MP3 already exists (don't recreate if we're using it as fallback)
+  if (await fs.pathExists(mp3)) {
+    log.info(`MP3 file already exists, skipping creation: ${mp3}`);
+    return;
+  }
+
   if (fs.existsSync(mic) && fs.existsSync(screen)) {
     await ffmpeg.toJoinedFile(mic, screen, mp3);
   } else if (fs.existsSync(mic)) {
@@ -121,17 +133,31 @@ const doMp3Step = async (job: PostProcessingJob) => {
 
 const doWhisperStep = async (job: PostProcessingJob) => {
   if (hasAborted() || !hasStep(job, "whisper")) return;
-  const { wav, recordingsFolder } = await getFilePaths(job);
+  const { wav, mp3, recordingsFolder } = await getFilePaths(job);
+
+  // If WAV file doesn't exist (e.g., was removed), fallback to MP3
+  const audioInput = (await fs.pathExists(wav)) ? wav : mp3;
+  if (!(await fs.pathExists(audioInput))) {
+    log.error(
+      `No audio file found for processing. Expected WAV: ${wav} or MP3: ${mp3}`,
+    );
+    throw new Error(
+      `No audio file found for processing recording: ${job.recordingId}`,
+    );
+  }
 
   const model = await models.prepareConfiguredModel();
 
   await whisper.processWavFile(
-    wav,
+    audioInput,
     path.join(recordingsFolder, job.recordingId, "transcript.json"),
     model,
   );
 
-  await fs.rm(wav);
+  // Only remove WAV file if it exists and we used it (not if we used MP3 fallback)
+  if ((await fs.pathExists(wav)) && audioInput === wav) {
+    await fs.rm(wav);
+  }
 };
 
 const doSummaryStep = async (job: PostProcessingJob) => {
