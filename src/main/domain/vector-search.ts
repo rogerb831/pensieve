@@ -270,7 +270,7 @@ class SQLiteVectorStore {
         this.db.run(
           "DELETE FROM chunks WHERE recording_id = ?",
           [recordingId],
-          (err) => {
+          function (err) {
             if (err) {
               log.error("Failed to remove transcript:", err);
               reject(err);
@@ -472,30 +472,33 @@ class SQLiteVectorStore {
             return;
           }
 
-          this.db.get(
-            "SELECT COUNT(*) as count FROM chunks",
-            (err, row: any) => {
-              if (err) {
-                reject(err);
-                return;
-              }
+          const { db } = this;
+          db.get("SELECT COUNT(*) as count FROM chunks", (err, row: any) => {
+            if (err) {
+              reject(err);
+              return;
+            }
 
-              this.db.get(
-                "SELECT COUNT(DISTINCT recording_id) as count FROM chunks",
-                (err, row2: any) => {
-                  if (err) {
-                    reject(err);
-                    return;
-                  }
+            if (!db) {
+              reject(new Error("Database connection lost"));
+              return;
+            }
 
-                  resolve({
-                    totalChunks: row.count,
-                    recordings: row2.count,
-                  });
-                },
-              );
-            },
-          );
+            db.get(
+              "SELECT COUNT(DISTINCT recording_id) as count FROM chunks",
+              (err, row2: any) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+
+                resolve({
+                  totalChunks: row.count,
+                  recordings: row2.count,
+                });
+              },
+            );
+          });
         },
       );
     } catch (error) {

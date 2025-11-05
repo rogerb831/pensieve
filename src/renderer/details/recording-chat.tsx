@@ -186,7 +186,7 @@ export const RecordingChat: FC<RecordingChatProps> = ({
                         }}
                       >
                         {message.type === "user" ? (
-                          <Text size="1" color="white">
+                          <Text size="1" style={{ color: "white" }}>
                             U
                           </Text>
                         ) : (
