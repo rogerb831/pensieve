@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
+import log from "electron-log/main";
 import * as ffmpeg from "./ffmpeg";
 import * as history from "./history";
 import * as whisper from "./whisper";
@@ -163,13 +164,16 @@ const doVectorSearchStep = async (job: PostProcessingJob) => {
   if (hasAborted() || !hasStep(job, "vectorSearch")) return;
   setStep("vectorSearch");
   setProgress("vectorSearch", 0);
-  
+
   try {
-    await vectorSearch.addTranscriptToVectorStore(job.recordingId, (progress) => {
-      setProgress("vectorSearch", progress);
-    });
+    await vectorSearch.addTranscriptToVectorStore(
+      job.recordingId,
+      (progress) => {
+        setProgress("vectorSearch", progress);
+      },
+    );
   } catch (error) {
-    console.error("Vector search indexing failed:", error);
+    log.error("Vector search indexing failed:", error);
     // Don't fail the entire post-processing if vector indexing fails
   }
 };
@@ -235,7 +239,7 @@ export const startQueue = () => {
       job.isRunning = false;
     } catch (err) {
       if (hasAborted()) return;
-      console.error("Failed to process recording", job.recordingId, err);
+      log.error("Failed to process recording", job.recordingId, err);
       job.error = err instanceof Error ? err.message : String(err);
       job.isDone = true;
       job.isRunning = false;

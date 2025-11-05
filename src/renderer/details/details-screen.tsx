@@ -1,7 +1,11 @@
 import { FC, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Flex, Tabs } from "@radix-ui/themes";
-import { HiMiniPencilSquare, HiOutlineBars3BottomLeft, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
+import {
+  HiMiniPencilSquare,
+  HiOutlineBars3BottomLeft,
+  HiOutlineChatBubbleLeftRight,
+} from "react-icons/hi2";
 import { RiRobot2Line } from "react-icons/ri";
 import { historyDetailsRoute } from "../router/router";
 import { QueryKeys } from "../../query-keys";
@@ -67,7 +71,10 @@ export const DetailsScreen: FC = () => {
             <ResponsiveTabTrigger value="notes" icon={<HiMiniPencilSquare />}>
               Notes
             </ResponsiveTabTrigger>
-            <ResponsiveTabTrigger value="chat" icon={<HiOutlineChatBubbleLeftRight />}>
+            <ResponsiveTabTrigger
+              value="chat"
+              icon={<HiOutlineChatBubbleLeftRight />}
+            >
               Chat
             </ResponsiveTabTrigger>
           </Tabs.List>

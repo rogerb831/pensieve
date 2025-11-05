@@ -80,7 +80,9 @@ export function pluginExposeRenderer(name: string): Plugin {
         // Expose env constant for main process use.
         process.env[VITE_DEV_SERVER_URL] =
           `http://localhost:${addressInfo?.port}`;
-        console.log(`Vite dev server exposed at: ${process.env[VITE_DEV_SERVER_URL]}`);
+        console.log(
+          `Vite dev server exposed at: ${process.env[VITE_DEV_SERVER_URL]}`,
+        );
       });
     },
   };

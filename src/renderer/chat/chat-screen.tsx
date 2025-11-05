@@ -1,20 +1,18 @@
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
+  Badge,
   Box,
-  Flex,
-  TextField,
   Button,
+  Card,
+  Flex,
   ScrollArea,
   Text,
-  Card,
-  Badge,
-  Select,
+  TextField,
 } from "@radix-ui/themes";
-import { HiPaperAirplane, HiSparkles, HiMagnifyingGlass } from "react-icons/hi2";
+import { HiPaperAirplane, HiSparkles } from "react-icons/hi2";
 import { useQuery } from "@tanstack/react-query";
 import { historyApi } from "../api";
 import { QueryKeys } from "../../query-keys";
-import { RecordingMeta } from "../../types";
 
 interface ChatMessage {
   id: string;
@@ -61,23 +59,25 @@ export const ChatScreen: FC = () => {
   });
 
   // Filter recordings based on search query
-  const filteredRecordings = recordings ? Object.entries(recordings)
-    .filter(([id, meta]) => {
-      if (!recordingSearchQuery) {
-        return true;
-      }
-      const searchLower = recordingSearchQuery.toLowerCase();
-      return (
-        meta.name?.toLowerCase().includes(searchLower) ||
-        id.toLowerCase().includes(searchLower)
-      );
-    })
-    .sort(([, a], [, b]) => {
-      // Sort by name if available, otherwise by ID
-      const nameA = a.name || a.started;
-      const nameB = b.name || b.started;
-      return nameA.localeCompare(nameB);
-    }) : [];
+  const filteredRecordings = recordings
+    ? Object.entries(recordings)
+        .filter(([id, meta]) => {
+          if (!recordingSearchQuery) {
+            return true;
+          }
+          const searchLower = recordingSearchQuery.toLowerCase();
+          return (
+            meta.name?.toLowerCase().includes(searchLower) ||
+            id.toLowerCase().includes(searchLower)
+          );
+        })
+        .sort(([, a], [, b]) => {
+          // Sort by name if available, otherwise by ID
+          const nameA = a.name || a.started;
+          const nameB = b.name || b.started;
+          return nameA.localeCompare(nameB);
+        })
+    : [];
 
   const [isPopulating, setIsPopulating] = useState(false);
 
@@ -100,24 +100,32 @@ export const ChatScreen: FC = () => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-          try {
-            // Get relevant content using vector search
-            const recordingFilter = selectedRecordingId === "all" ? undefined : selectedRecordingId;
-            const searchResults = await historyApi.vectorSearch(input.trim(), 5, recordingFilter);
+    try {
+      // Get relevant content using vector search
+      const recordingFilter =
+        selectedRecordingId === "all" ? undefined : selectedRecordingId;
+      const searchResults = await historyApi.vectorSearch(
+        input.trim(),
+        5,
+        recordingFilter,
+      );
 
-            // Generate conversational response using LLM
-            const response = await historyApi.generateConversationalResponse(input.trim(), searchResults);
+      // Generate conversational response using LLM
+      const response = await historyApi.generateConversationalResponse(
+        input.trim(),
+        searchResults,
+      );
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
         content: response,
         timestamp: new Date(),
-        sources: searchResults.map(result => ({
+        sources: searchResults.map((result) => ({
           recordingId: result.recordingId,
           text: result.text,
           score: result.score,
@@ -126,16 +134,17 @@ export const ChatScreen: FC = () => {
         })),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content: "Sorry, I encountered an error while processing your question. Please try again.",
+        content:
+          "Sorry, I encountered an error while processing your question. Please try again.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +160,8 @@ export const ChatScreen: FC = () => {
   const handlePopulateVectorStore = async () => {
     setIsPopulating(true);
     try {
-      const result = await historyApi.populateVectorStoreFromExistingTranscripts();
+      const result =
+        await historyApi.populateVectorStoreFromExistingTranscripts();
       console.log("Vector store population result:", result);
       // Refresh stats
       await refetchStats();
@@ -165,14 +175,26 @@ export const ChatScreen: FC = () => {
   if (!isVectorStoreAvailable) {
     return (
       <Box p="2rem" style={{ height: "100%" }}>
-        <Flex direction="column" align="center" justify="center" gap="4" style={{ height: "100%" }}>
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap="4"
+          style={{ height: "100%" }}
+        >
           <HiSparkles size="48" color="var(--gray-8)" />
           <Text size="4" weight="medium" color="gray">
             Vector Search Not Available
           </Text>
-          <Text size="2" color="gray" align="center" style={{ maxWidth: "400px" }}>
-            The vector search system needs to be initialized before you can use the chat feature. 
-            This happens automatically when you record and process your first transcript.
+          <Text
+            size="2"
+            color="gray"
+            align="center"
+            style={{ maxWidth: "400px" }}
+          >
+            The vector search system needs to be initialized before you can use
+            the chat feature. This happens automatically when you record and
+            process your first transcript.
           </Text>
         </Flex>
       </Box>
@@ -180,14 +202,21 @@ export const ChatScreen: FC = () => {
   }
 
   return (
-    <Box p="1rem" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Box
+      p="1rem"
+      style={{ height: "100%", display: "flex", flexDirection: "column" }}
+    >
       {/* Header with stats */}
       <Flex justify="between" align="center" mb="2">
-        <Text size="3" weight="medium">Chat with Your Transcripts</Text>
+        <Text size="3" weight="medium">
+          Chat with Your Transcripts
+        </Text>
         <Flex align="center" gap="2">
           {selectedRecordingId !== "all" && recordings && (
             <Badge size="2" color="green" variant="soft">
-              Filtered: {recordings[selectedRecordingId]?.name || `Recording ${selectedRecordingId}`}
+              Filtered:{" "}
+              {recordings[selectedRecordingId]?.name ||
+                `Recording ${selectedRecordingId}`}
             </Badge>
           )}
           {vectorStoreStats && (
@@ -210,7 +239,9 @@ export const ChatScreen: FC = () => {
 
       {/* Transcript Filter */}
       <Flex align="center" gap="2" mb="3">
-        <Text size="2" weight="medium" color="gray">Filter by transcript:</Text>
+        <Text size="2" weight="medium" color="gray">
+          Filter by transcript:
+        </Text>
         <Box style={{ position: "relative", minWidth: "300px" }}>
           <TextField.Root
             placeholder="Search transcripts..."
@@ -238,7 +269,10 @@ export const ChatScreen: FC = () => {
                 p="2"
                 style={{
                   cursor: "pointer",
-                  backgroundColor: selectedRecordingId === "all" ? "var(--accent-3)" : "transparent",
+                  backgroundColor:
+                    selectedRecordingId === "all"
+                      ? "var(--accent-3)"
+                      : "transparent",
                 }}
                 onClick={() => setSelectedRecordingId("all")}
               >
@@ -250,7 +284,10 @@ export const ChatScreen: FC = () => {
                   p="2"
                   style={{
                     cursor: "pointer",
-                    backgroundColor: selectedRecordingId === id ? "var(--accent-3)" : "transparent",
+                    backgroundColor:
+                      selectedRecordingId === id
+                        ? "var(--accent-3)"
+                        : "transparent",
                   }}
                   onClick={() => {
                     setSelectedRecordingId(id);
@@ -285,23 +322,34 @@ export const ChatScreen: FC = () => {
             <Card style={{ textAlign: "center", padding: "1rem" }}>
               <Flex direction="column" align="center" gap="3">
                 <HiSparkles size="32" color="var(--accent-9)" />
-                <Text size="3" weight="medium">Ask questions about your transcripts</Text>
+                <Text size="3" weight="medium">
+                  Ask questions about your transcripts
+                </Text>
                 <Text size="2" color="gray">
-                  I can help you find information across all your recorded conversations using semantic search.
+                  I can help you find information across all your recorded
+                  conversations using semantic search.
                 </Text>
               </Flex>
             </Card>
           )}
 
           {messages.map((message) => (
-            <Card key={message.id} style={{
-              padding: "0.75rem", 
-              alignSelf: message.type === "user" ? "flex-end" : "flex-start",
-              maxWidth: "80%",
-              backgroundColor: message.type === "user" ? "var(--accent-3)" : "var(--gray-2)"
-            }}>
+            <Card
+              key={message.id}
+              style={{
+                padding: "0.75rem",
+                alignSelf: message.type === "user" ? "flex-end" : "flex-start",
+                maxWidth: "80%",
+                backgroundColor:
+                  message.type === "user" ? "var(--accent-3)" : "var(--gray-2)",
+              }}
+            >
               <Flex direction="column" gap="2">
-                <Text size="2" weight="medium" color={message.type === "user" ? "blue" : "gray"}>
+                <Text
+                  size="2"
+                  weight="medium"
+                  color={message.type === "user" ? "blue" : "gray"}
+                >
                   {message.type === "user" ? "You" : "Assistant"}
                 </Text>
                 <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
@@ -309,14 +357,25 @@ export const ChatScreen: FC = () => {
                 </Text>
                 {message.sources && message.sources.length > 0 && (
                   <Box mt="2">
-                    <Text size="1" weight="medium" color="gray" mb="1">Sources:</Text>
+                    <Text size="1" weight="medium" color="gray" mb="1">
+                      Sources:
+                    </Text>
                     {message.sources.map((source, index) => (
-                      <Box key={index} p="2" style={{ backgroundColor: "var(--gray-1)", borderRadius: "4px" }} mb="1">
+                      <Box
+                        key={index}
+                        p="2"
+                        style={{
+                          backgroundColor: "var(--gray-1)",
+                          borderRadius: "4px",
+                        }}
+                        mb="1"
+                      >
                         <Text size="1" color="gray">
-                          Recording: {source.recordingId} (Score: {source.score.toFixed(3)})
+                          Recording: {source.recordingId} (Score:{" "}
+                          {source.score.toFixed(3)})
                         </Text>
                         <Text size="1" style={{ fontStyle: "italic" }}>
-                          "{source.text}"
+                          &quot;{source.text}&quot;
                         </Text>
                       </Box>
                     ))}
@@ -330,17 +389,27 @@ export const ChatScreen: FC = () => {
           ))}
 
           {isLoading && (
-            <Card style={{ alignSelf: "flex-start", maxWidth: "80%", padding: "0.75rem" }}>
+            <Card
+              style={{
+                alignSelf: "flex-start",
+                maxWidth: "80%",
+                padding: "0.75rem",
+              }}
+            >
               <Flex align="center" gap="2">
-                <Text size="2" color="gray">Assistant is thinking...</Text>
-                <Box style={{ 
-                  width: "16px", 
-                  height: "16px", 
-                  border: "2px solid var(--gray-6)", 
-                  borderTop: "2px solid var(--accent-9)", 
-                  borderRadius: "50%", 
-                  animation: "spin 1s linear infinite" 
-                }} />
+                <Text size="2" color="gray">
+                  Assistant is thinking...
+                </Text>
+                <Box
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    border: "2px solid var(--gray-6)",
+                    borderTop: "2px solid var(--accent-9)",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
               </Flex>
             </Card>
           )}

@@ -2,10 +2,10 @@ import { FC } from "react";
 import { IconButton, Tabs } from "@radix-ui/themes";
 import {
   HiMiniListBullet,
+  HiOutlineChatBubbleLeftRight,
   HiOutlineCog6Tooth,
   HiOutlineDocumentText,
   HiOutlineVideoCamera,
-  HiOutlineChatBubbleLeftRight,
 } from "react-icons/hi2";
 import { History } from "../history/history";
 import { PageContainer } from "../common/page-container";

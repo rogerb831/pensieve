@@ -1,13 +1,13 @@
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
+  Badge,
   Box,
-  Flex,
-  TextField,
   Button,
+  Card,
+  Flex,
   ScrollArea,
   Text,
-  Card,
-  Badge,
+  TextField,
 } from "@radix-ui/themes";
 import { HiPaperAirplane, HiSparkles } from "react-icons/hi2";
 import { useQuery } from "@tanstack/react-query";
@@ -34,10 +34,10 @@ interface RecordingChatProps {
   onJumpTo?: (time: number) => void;
 }
 
-export const RecordingChat: FC<RecordingChatProps> = ({ 
-  recordingId, 
-  meta, 
-  onJumpTo 
+export const RecordingChat: FC<RecordingChatProps> = ({
+  recordingId,
+  meta,
+  onJumpTo,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -70,23 +70,30 @@ export const RecordingChat: FC<RecordingChatProps> = ({
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
       // Get relevant content using vector search scoped to this recording
-      const searchResults = await historyApi.vectorSearch(input.trim(), 5, recordingId);
+      const searchResults = await historyApi.vectorSearch(
+        input.trim(),
+        5,
+        recordingId,
+      );
 
       // Generate conversational response using LLM
-      const response = await historyApi.generateConversationalResponse(input.trim(), searchResults);
+      const response = await historyApi.generateConversationalResponse(
+        input.trim(),
+        searchResults,
+      );
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
         content: response,
         timestamp: new Date(),
-        sources: searchResults.map(result => ({
+        sources: searchResults.map((result) => ({
           text: result.text,
           startTime: result.startTime,
           endTime: result.endTime,
@@ -94,16 +101,17 @@ export const RecordingChat: FC<RecordingChatProps> = ({
         })),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content: "Sorry, I encountered an error while processing your question. Please try again.",
+        content:
+          "Sorry, I encountered an error while processing your question. Please try again.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -119,14 +127,15 @@ export const RecordingChat: FC<RecordingChatProps> = ({
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   if (!isVectorStoreAvailable) {
     return (
       <Box p="4">
         <Text color="gray">
-          Vector search is not available. Please ensure the vector store is properly initialized.
+          Vector search is not available. Please ensure the vector store is
+          properly initialized.
         </Text>
       </Box>
     );
@@ -137,7 +146,7 @@ export const RecordingChat: FC<RecordingChatProps> = ({
       {/* Chat Header */}
       <Box p="3" style={{ borderBottom: "1px solid var(--gray-6)" }}>
         <Text size="2" weight="medium" color="gray">
-          Chat about "{meta.name || 'Untitled Recording'}"
+          Chat about &quot;{meta.name || "Untitled Recording"}&quot;
         </Text>
         <Text size="1" color="gray">
           Ask questions about this specific recording
@@ -150,8 +159,9 @@ export const RecordingChat: FC<RecordingChatProps> = ({
           {messages.length === 0 ? (
             <Box p="4" style={{ textAlign: "center" }}>
               <Text color="gray" size="2">
-                Start a conversation about this recording. Ask questions about what was discussed, 
-                who said what, or any other details you'd like to know.
+                Start a conversation about this recording. Ask questions about
+                what was discussed, who said what, or any other details
+                you&apos;d like to know.
               </Text>
             </Box>
           ) : (
@@ -165,7 +175,10 @@ export const RecordingChat: FC<RecordingChatProps> = ({
                           width: "32px",
                           height: "32px",
                           borderRadius: "50%",
-                          backgroundColor: message.type === "user" ? "var(--blue-9)" : "var(--gray-9)",
+                          backgroundColor:
+                            message.type === "user"
+                              ? "var(--blue-9)"
+                              : "var(--gray-9)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -173,14 +186,17 @@ export const RecordingChat: FC<RecordingChatProps> = ({
                         }}
                       >
                         {message.type === "user" ? (
-                          <Text size="1" color="white">U</Text>
+                          <Text size="1" color="white">
+                            U
+                          </Text>
                         ) : (
                           <HiSparkles color="white" size="16" />
                         )}
                       </Box>
                       <Box style={{ flex: 1 }}>
                         <Text size="1" color="gray" mb="1">
-                          {message.type === "user" ? "You" : "Assistant"} • {message.timestamp.toLocaleTimeString()}
+                          {message.type === "user" ? "You" : "Assistant"} •{" "}
+                          {message.timestamp.toLocaleTimeString()}
                         </Text>
                         <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
                           {message.content}
@@ -200,11 +216,12 @@ export const RecordingChat: FC<RecordingChatProps> = ({
                               <Flex justify="between" align="start" gap="2">
                                 <Box style={{ flex: 1 }}>
                                   <Text size="1" style={{ lineHeight: 1.4 }}>
-                                    "{source.text}"
+                                    &quot;{source.text}&quot;
                                   </Text>
                                   <Flex align="center" gap="2" mt="1">
                                     <Badge variant="soft" color="blue">
-                                      {formatTime(source.startTime)} - {formatTime(source.endTime)}
+                                      {formatTime(source.startTime)} -{" "}
+                                      {formatTime(source.endTime)}
                                     </Badge>
                                     <Text size="1" color="gray">
                                       Score: {(source.score * 100).toFixed(1)}%

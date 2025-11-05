@@ -45,9 +45,12 @@ export const openAppWindow = (
   });
 
   // Add error handling for failed loads
-  win.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL) => {
-    log.error(`Failed to load ${validatedURL}:`, errorCode, errorDescription);
-  });
+  win.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription, validatedURL) => {
+      log.error(`Failed to load ${validatedURL}:`, errorCode, errorDescription);
+    },
+  );
 
   // Helper function to check if Vite server is reachable
   const checkViteServer = (url: string): Promise<boolean> => {
@@ -63,7 +66,7 @@ export const openAppWindow = (
           },
           (res) => {
             resolve(res.statusCode === 200 || res.statusCode === 304);
-          }
+          },
         );
         req.on("error", () => resolve(false));
         req.on("timeout", () => {
@@ -85,13 +88,16 @@ export const openAppWindow = (
       : "";
     const url = `${MAIN_WINDOW_VITE_DEV_SERVER_URL}#${hash}?${queryString}`;
     log.info("Loading URL:", url);
-    log.info("MAIN_WINDOW_VITE_DEV_SERVER_URL constant:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    
+    log.info(
+      "MAIN_WINDOW_VITE_DEV_SERVER_URL constant:",
+      MAIN_WINDOW_VITE_DEV_SERVER_URL,
+    );
+
     // Wait for Vite server to be ready before loading
     const waitForViteServer = async (retries = 20) => {
       const baseUrl = MAIN_WINDOW_VITE_DEV_SERVER_URL;
       log.info(`Checking if Vite server is ready at ${baseUrl}...`);
-      
+
       for (let i = 0; i < retries; i++) {
         const isReady = await checkViteServer(baseUrl);
         if (isReady) {
@@ -100,13 +106,15 @@ export const openAppWindow = (
           return;
         }
         log.info(`Vite server not ready yet, waiting... (${i + 1}/${retries})`);
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise<void>((resolve) => {
+          setTimeout(() => resolve(), 500);
+        });
       }
-      
+
       log.error("Vite server failed to start after retries, loading anyway...");
       win.loadURL(url);
     };
-    
+
     waitForViteServer().catch((err) => {
       log.error("Error waiting for Vite server:", err);
       win.loadURL(url);

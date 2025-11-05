@@ -131,7 +131,7 @@ app.whenReady().then(async () => {
       const fileSize = stat.size;
       const { range } = req.headers;
 
-      console.log(`Audio request: ${req.url}, Range: ${range || "none"}`);
+      log.info(`Audio request: ${req.url}, Range: ${range || "none"}`);
 
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
@@ -139,7 +139,7 @@ app.whenReady().then(async () => {
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
         const chunksize = end - start + 1;
 
-        console.log(`Range request: ${start}-${end} (${chunksize} bytes)`);
+        log.info(`Range request: ${start}-${end} (${chunksize} bytes)`);
 
         res.writeHead(206, {
           "Content-Range": `bytes ${start}-${end}/${fileSize}`,
@@ -151,7 +151,7 @@ app.whenReady().then(async () => {
         const stream = fs.createReadStream(mp3, { start, end });
         stream.pipe(res);
       } else {
-        console.log(`Full file request: ${fileSize} bytes`);
+        log.info(`Full file request: ${fileSize} bytes`);
         res.writeHead(200, {
           "Content-Length": fileSize,
           "Content-Type": "audio/mpeg",
@@ -171,7 +171,7 @@ app.whenReady().then(async () => {
   const audioPort = await getPort({ port: 3001 });
   setAudioServerPort(audioPort);
   audioServer.listen(audioPort, () => {
-    console.log(`Audio server running on port ${audioPort}`);
+    log.info(`Audio server running on port ${audioPort}`);
   });
 
   // Keep the original protocol for backward compatibility
@@ -185,7 +185,7 @@ app.whenReady().then(async () => {
     if (fs.existsSync(mp3)) {
       callback({ path: mp3 });
     } else {
-      console.error(`Recording audio not found: ${mp3}`);
+      log.error(`Recording audio not found: ${mp3}`);
       callback({ statusCode: 404 });
     }
   });
@@ -194,7 +194,7 @@ app.whenReady().then(async () => {
     const fileName = request.url.replace("screenshot://", "");
 
     if (!/^[\w-_]+\/[\w]+\.png$/.test(fileName)) {
-      console.error(`Invalid image loaded: ${fileName}`);
+      log.error(`Invalid image loaded: ${fileName}`);
       callback({ statusCode: 400 });
       return;
     }
@@ -203,7 +203,7 @@ app.whenReady().then(async () => {
     if (fs.existsSync(imageFile)) {
       callback({ path: imageFile });
     } else {
-      console.error(`Image not found: ${fileName}`);
+      log.error(`Image not found: ${fileName}`);
       callback({ statusCode: 404 });
     }
   });

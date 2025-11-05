@@ -57,7 +57,7 @@ const config: ForgeConfig = {
   rebuildConfig: {
     // Explicitly exclude sqlite3 to avoid node-abi check issues
     // sqlite3 will use prebuilt binaries or can be rebuilt manually
-    //onlyModules: ["sqlite3"],
+    // onlyModules: ["sqlite3"],
     onlyModules: [],
   },
   makers: [
