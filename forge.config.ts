@@ -97,9 +97,7 @@ const config: ForgeConfig = {
             process.env.GITHUB_REPOSITORY_OWNER ||
             process.env.GITHUB_REPOSITORY?.split("/")[0] ||
             "lukasbach",
-          name:
-            process.env.GITHUB_REPOSITORY?.split("/")[1] ||
-            "pensieve",
+          name: process.env.GITHUB_REPOSITORY?.split("/")[1] || "pensieve",
         },
         prerelease: false,
         draft: true,
