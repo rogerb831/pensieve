@@ -28,7 +28,7 @@ const getDefaultConfig = async (): Promise<RecordingConfig> => {
   const settings = await mainApi.getSettings();
   const devices = await navigator.mediaDevices.enumerateDevices();
   const defaultMic = devices.find((d) => d.kind === "audioinput");
-  
+
   return {
     recordScreenAudio: settings.ui.defaultRecordScreenAudio,
     mic: settings.ui.defaultRecordMicrophone ? defaultMic : undefined,
@@ -59,7 +59,7 @@ export const useRecorderState = create<RecorderState>()((_set, get) => {
   };
 
   return {
-    recordingConfig: { 
+    recordingConfig: {
       recordScreenAudio: false,
       mic: undefined,
     },
@@ -75,7 +75,7 @@ export const useRecorderState = create<RecorderState>()((_set, get) => {
     setConfig: async (config) => {
       const newConfig = { ...get().recordingConfig, ...config };
       set({ recordingConfig: newConfig });
-      
+
       // Save to settings for persistence
       await mainApi.saveSettings({
         ui: {
