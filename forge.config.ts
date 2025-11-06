@@ -12,6 +12,10 @@ import fs from "fs-extra";
 import path from "path";
 import { Resvg } from "@resvg/resvg-js";
 import pngToIco from "png-to-ico";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 const createIcon = async (factor: number, base = 32) => {
   const source = await fs.readFile(path.join(__dirname, "./icon.svg"), "utf-8");
@@ -30,26 +34,70 @@ const createIcon = async (factor: number, base = 32) => {
   );
 };
 
+const createIcns = async () => {
+  const extraDir = path.join(__dirname, "extra");
+  const iconsetDir = path.join(extraDir, "icon.iconset");
+  await fs.ensureDir(iconsetDir);
+
+  // macOS requires specific icon sizes in .iconset format
+  // Format: icon_{size}x{size}.png and icon_{size}x{size}@2x.png
+  const sizes = [
+    { size: 16, filename: "icon_16x16.png" },
+    { size: 32, filename: "icon_16x16@2x.png" }, // 32x32 for @2x
+    { size: 32, filename: "icon_32x32.png" },
+    { size: 64, filename: "icon_32x32@2x.png" }, // 64x64 for @2x
+    { size: 128, filename: "icon_128x128.png" },
+    { size: 256, filename: "icon_128x128@2x.png" }, // 256x256 for @2x
+    { size: 256, filename: "icon_256x256.png" },
+    { size: 512, filename: "icon_256x256@2x.png" }, // 512x512 for @2x
+    { size: 512, filename: "icon_512x512.png" },
+    { size: 1024, filename: "icon_512x512@2x.png" }, // 1024x1024 for @2x
+  ];
+
+  // Generate all required icon sizes
+  for (const { size, filename } of sizes) {
+    const source = await fs.readFile(path.join(__dirname, "./icon.svg"), "utf-8");
+    const resvg = new Resvg(source, {
+      background: "transparent",
+      fitTo: { mode: "width", value: size },
+    });
+    const png = resvg.render();
+    await fs.writeFile(
+      path.join(iconsetDir, filename),
+      png.asPng() as any,
+    );
+  }
+
+  // Convert .iconset to .icns using macOS iconutil
+  const icnsPath = path.join(extraDir, "icon.icns");
+  await execAsync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`);
+  
+  // Clean up the .iconset directory
+  await fs.remove(iconsetDir);
+};
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
       unpack: "*.{node,dll,exe}",
     },
     extraResource: "./extra",
-    icon: "./extra/icon@8x.ico",
+    // Electron packager will automatically use .icns for macOS, .ico for Windows
+    // We generate both formats in generateAssets hook
+    icon: "./extra/icon",
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({
       loadingGif: path.join(__dirname, "splash.gif"),
-      setupIcon: "./extra/icon@8x.ico",
+      setupIcon: "./extra/icon.ico",
     }),
     // new MakerAppX({}),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({}),
     new MakerDeb({}),
     new MakerDMG({
-      icon: "./extra/icon@8x.ico",
+      icon: "./extra/icon.icns",
     }),
   ],
   plugins: [
@@ -192,14 +240,22 @@ const config: ForgeConfig = {
 
       // Note: For macOS and Linux, FFmpeg and Whisper will use system installations
 
+      // Generate standard PNG icons (for runtime use)
       await createIcon(1);
       await createIcon(2);
       await createIcon(3);
       await createIcon(4);
       await createIcon(8);
+
+      // Generate Windows ICO file (always generate for cross-platform builds)
       await pngToIco(path.join(__dirname, "extra/icon@8x.png")).then((buf) =>
-        fs.writeFileSync(path.join(__dirname, "extra/icon@8x.ico"), buf as any),
+        fs.writeFileSync(path.join(__dirname, "extra/icon.ico"), buf as any),
       );
+
+      // Generate macOS ICNS file (only on macOS due to iconutil requirement)
+      if (platform === "darwin") {
+        await createIcns();
+      }
     },
   },
 };
