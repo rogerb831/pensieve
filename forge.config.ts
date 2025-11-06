@@ -281,11 +281,13 @@ const config: ForgeConfig = {
           if (result.platform === "darwin") {
             // Find the DMG file - artifacts can be an array of strings or objects
             const dmgPath = result.artifacts.find((artifact: any) => {
-              const artifactPath = typeof artifact === "string" ? artifact : artifact?.path;
+              const artifactPath =
+                typeof artifact === "string" ? artifact : artifact?.path;
               return artifactPath?.endsWith(".dmg");
             });
-            
-            const dmgPathStr = typeof dmgPath === "string" ? dmgPath : (dmgPath as any)?.path;
+
+            const dmgPathStr =
+              typeof dmgPath === "string" ? dmgPath : (dmgPath as any)?.path;
 
             if (dmgPathStr) {
               try {
@@ -311,12 +313,12 @@ const config: ForgeConfig = {
                   // Convert DMG to read-write, mount it, add helper, then convert back
                   const tempDmgBase = dmgPathStr.replace(/\.dmg$/, ".rw");
                   const tempDmg = `${tempDmgBase}.dmg`;
-                  
+
                   // Remove temp file if it exists
                   if (await fs.pathExists(tempDmg)) {
                     await fs.remove(tempDmg);
                   }
-                  
+
                   console.log("Converting DMG to read-write format...");
                   await execAsync(
                     `hdiutil convert "${dmgPathStr}" -format UDRW -o "${tempDmgBase}" -quiet`,
@@ -327,7 +329,7 @@ const config: ForgeConfig = {
                   const mountOutput = await execAsync(
                     `hdiutil attach "${tempDmg}" -nobrowse -plist`,
                   );
-                  
+
                   // Parse mount point from plist output or stdout
                   let mountPoint: string | undefined;
                   if (mountOutput.stdout.includes("<key>mount-point</key>")) {
@@ -337,9 +339,12 @@ const config: ForgeConfig = {
                       if (plistLines[i].includes("<key>mount-point</key>")) {
                         // Next non-empty line should be the string value
                         for (let j = i + 1; j < plistLines.length; j++) {
-                          const stringMatch = plistLines[j].match(/<string>(.*?)<\/string>/);
+                          const stringMatch = plistLines[j].match(
+                            /<string>(.*?)<\/string>/,
+                          );
                           if (stringMatch) {
-                            mountPoint = stringMatch[1];
+                            const [, mountPointValue] = stringMatch;
+                            mountPoint = mountPointValue;
                             break;
                           }
                         }
@@ -347,10 +352,12 @@ const config: ForgeConfig = {
                       }
                     }
                   }
-                  
+
                   // Fallback to regex on stdout/stderr if plist parsing didn't work
                   if (!mountPoint) {
-                    const match = (mountOutput.stdout + mountOutput.stderr).match(/\/Volumes\/[^\s\n<]+/);
+                    const match = (
+                      mountOutput.stdout + mountOutput.stderr
+                    ).match(/\/Volumes\/[^\s\n<]+/);
                     mountPoint = match?.[0];
                   }
 
@@ -360,13 +367,18 @@ const config: ForgeConfig = {
                     if (!(await fs.pathExists(helperApp))) {
                       throw new Error(`Helper app not found at: ${helperApp}`);
                     }
-                    const targetPath = path.join(mountPoint, "Pensieve Installer.app");
+                    const targetPath = path.join(
+                      mountPoint,
+                      "Pensieve Installer.app",
+                    );
                     console.log(`Copying ${helperApp} to ${targetPath}`);
                     // Copy helper app to DMG
                     await fs.copy(helperApp, targetPath);
                     // Verify copy succeeded
                     if (!(await fs.pathExists(targetPath))) {
-                      throw new Error(`Failed to copy helper app to ${targetPath}`);
+                      throw new Error(
+                        `Failed to copy helper app to ${targetPath}`,
+                      );
                     }
                     console.log("Copied installer helper to DMG");
 
@@ -391,7 +403,9 @@ const config: ForgeConfig = {
 
                     console.log("Successfully added installer helper to DMG");
                   } else {
-                    console.warn("Could not find mount point from hdiutil output");
+                    console.warn(
+                      "Could not find mount point from hdiutil output",
+                    );
                   }
                 } else {
                   console.warn(`Helper script not found at: ${helperScript}`);
@@ -400,11 +414,12 @@ const config: ForgeConfig = {
                 console.error("Failed to add DMG helper:", error);
                 // Don't fail the build if this fails
               }
-            } else {
+            } else if (result.platform === "darwin") {
               // Only warn if this is a darwin result (skip other platforms)
-              if (result.platform === "darwin") {
-                console.warn("DMG file not found in artifacts:", result.artifacts);
-              }
+              console.warn(
+                "DMG file not found in artifacts:",
+                result.artifacts,
+              );
             }
           }
         }
