@@ -77,8 +77,8 @@ export const getEmbeddings = async () => {
       return new OllamaEmbeddings(llm.providerConfig.ollama.embeddings);
     case "openai":
       return new OpenAIEmbeddings({
+        ...llm.providerConfig.openai.chatModel, // reuse provider config
         ...llm.providerConfig.openai.embeddings,
-        apiKey: llm.providerConfig.openai.chatModel.apiKey,
       });
     default:
       throw new Error(`Invalid LLM provider: ${llm.provider}`);
