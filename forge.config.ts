@@ -79,14 +79,33 @@ const createIcns = async () => {
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
-      unpack: "*.{node,dll,exe}",
+      unpack: "**/*.node",
+      unpackDir: "node_modules/sqlite3",
     },
     extraResource: "./extra",
-    // Electron packager will automatically use .icns for macOS, .ico for Windows
-    // We generate both formats in generateAssets hook
-    icon: "./extra/icon",
+    icon: "./extra/icon@8x.ico",
+    ignore: [
+      /^\/src/,
+      /^\/docs/,
+      /^\/images/,
+      /^\/\.github/,
+      /^\/\.idea/,
+      /^\/scripts/,
+      /^\/vector-store/,
+      /^\/\.git/,
+      /^\/\.gitignore/,
+      /^\/README\.md$/,
+      /^\/yarn\.lock$/,
+      /^\/\.yarnrc\.yml$/,
+      /^\/package-lock\.json$/,
+    ],
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    // Explicitly exclude sqlite3 to avoid node-abi check issues
+    // sqlite3 will use prebuilt binaries or can be rebuilt manually
+    // onlyModules: ["sqlite3"],
+    onlyModules: [],
+  },
   makers: [
     new MakerSquirrel({
       loadingGif: path.join(__dirname, "splash.gif"),
