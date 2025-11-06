@@ -56,22 +56,22 @@ const createIcns = async () => {
 
   // Generate all required icon sizes
   for (const { size, filename } of sizes) {
-    const source = await fs.readFile(path.join(__dirname, "./icon.svg"), "utf-8");
+    const source = await fs.readFile(
+      path.join(__dirname, "./icon.svg"),
+      "utf-8",
+    );
     const resvg = new Resvg(source, {
       background: "transparent",
       fitTo: { mode: "width", value: size },
     });
     const png = resvg.render();
-    await fs.writeFile(
-      path.join(iconsetDir, filename),
-      png.asPng() as any,
-    );
+    await fs.writeFile(path.join(iconsetDir, filename), png.asPng() as any);
   }
 
   // Convert .iconset to .icns using macOS iconutil
   const icnsPath = path.join(extraDir, "icon.icns");
   await execAsync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`);
-  
+
   // Clean up the .iconset directory
   await fs.remove(iconsetDir);
 };
